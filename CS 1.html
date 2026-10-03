@@ -1,0 +1,2042 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Station Cleaning Digital Form</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f3f7f3;color:#172117}
+header{background:#236b2c;color:#fff;padding:18px;text-align:center}
+.live{position:sticky;top:0;z-index:20;background:#fff;border-bottom:3px solid #236b2c;padding:10px;display:grid;grid-template-columns:repeat(3,1fr);text-align:center;box-shadow:0 2px 8px #0002}
+.live b{display:block;font-size:25px;color:#2e7d32}.wrap{max-width:900px;margin:auto;padding:14px}
+.card{background:#fff;border-radius:16px;margin:14px 0;padding:16px;box-shadow:0 1px 5px #0001}
+.meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.meta label{font-weight:bold}
+input,select,textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ccd5cc;border-radius:10px;font-size:16px;margin-top:5px}
+.section-title{font-size:22px;font-weight:bold;color:#246c2c;border-bottom:2px solid #dce9dc;padding-bottom:10px}
+.target{font-size:13px;color:#596659;margin:5px 0 12px}
+.item{padding:15px 0;border-bottom:1px solid #e5e9e5}.item h3{margin:0 0 5px}.std{color:#687268;margin-bottom:10px}
+.choices{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.choice{border:1px solid #ccd5cc;border-radius:10px;padding:10px;text-align:center}.choice input{width:auto;margin:0 5px 0 0}
+.missing{border:2px solid #c62828;border-radius:12px;padding:12px;background:#fff5f5}
+#msg{display:none;background:#fff0f0;color:#a31717;border:2px solid #c62828;padding:12px;border-radius:10px;margin:12px 0;font-weight:bold}
+footer{position:sticky;bottom:0;background:#fff;padding:12px;border-top:1px solid #ddd;display:flex;gap:10px;align-items:center}
+button{margin-left:auto;background:#2e7d32;color:white;border:0;border-radius:12px;padding:14px 24px;font-size:17px;font-weight:bold}button:disabled{opacity:.4}
+@media(max-width:650px){.choices{grid-template-columns:repeat(2,1fr)}.meta{grid-template-columns:1fr}.live b{font-size:21px}}
+
+/* Problem highlighting */
+.item.problem-item{
+  border:3px solid #c62828 !important;
+  border-radius:14px !important;
+  background:#fff1f1 !important;
+  padding:14px !important;
+  margin:10px 0 !important;
+  box-shadow:0 0 0 3px rgba(198,40,40,.08);
+}
+.item.problem-item::before{
+  content:"⚠ PROBLEM / يوجد ملاحظة";
+  display:block;
+  color:#c62828;
+  font-weight:900;
+  margin-bottom:8px;
+}
+.problem-summary{
+  background:#fff1f1;border:2px solid #c62828;color:#9b1c1c;
+  border-radius:12px;padding:12px;margin:12px 0;font-weight:700;
+}
+
+.item.missing-answer{
+  border:4px solid #d00000 !important;
+  border-radius:14px !important;
+  background:#fff7f7 !important;
+  padding:14px !important;
+  margin:10px 0 !important;
+  box-shadow:0 0 0 4px rgba(208,0,0,.10);
+}
+.item.missing-answer::before{
+  content:"⚠ REQUIRED / اختر إجابة قبل الإرسال";
+  display:block;
+  color:#d00000;
+  font-weight:900;
+  font-size:17px;
+  margin-bottom:10px;
+}
+#missingAlert{
+  display:none;position:fixed;left:12px;right:12px;top:12px;z-index:10000;
+  background:#b71c1c;color:white;padding:14px 16px;border-radius:12px;
+  font-weight:900;text-align:center;box-shadow:0 4px 16px #0004;
+}
+
+footer{z-index:9998 !important}
+#submit{position:relative;z-index:9999 !important;touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,.12);
+
+  opacity:1 !important;
+  cursor:pointer !important;
+  pointer-events:auto !important;
+  background:#2e7d32 !important;
+  color:#fff !important;
+}
+#submit:disabled{
+  opacity:1 !important;
+  cursor:pointer !important;
+  pointer-events:auto !important;
+  background:#2e7d32 !important;
+}
+</style>
+<script>
+window.COMPANY_CONFIG = {
+  API_ENDPOINT: "https://fowibmxsousmpuiafzch.supabase.co/rest/v1/station_inspections",
+  COMPANY_NAME: "Company",
+  FORM_VERSION: "1.0",
+  // Paste the approved shared endpoint here later. Leave blank for local demo testing.
+  CONNECTION_MODE: "AUTO"
+};
+</script>
+
+</head><body><div id="missingAlert"></div>
+<header><h2>Station Cleaning Digital Checklist</h2>
+<div id="connectionBanner" style="margin-top:8px;font-size:12px"></div><div>Company checklist converted to digital form</div></header>
+<div class="live"><div>ANSWERED<b id="ans">0 / 168</b></div><div>CURRENT SCORE<b id="pct">0%</b></div><div>SCORE<b id="score">0 / 0</b></div></div>
+<div class="wrap">
+<div class="card"><b>Inspection ID:</b> <span id="inspectionId"></span> &nbsp; | &nbsp; <b>Form Version:</b> 1.0</div><div class="card meta">
+<label>Station<select id="station" required><option value="">Select station</option><option>3A1</option><option>3A2</option><option>3B1</option><option>3B2</option><option>3C2</option><option>3D3</option><option>3D1</option><option>3D2</option><option>3E1</option><option>3E2</option><option>3E3</option><option>3E4</option><option>3E5</option><option>3E6</option><option>3F1</option><option>3F2</option><option>3G1</option><option>3G2</option><option>3H1</option><option>3J1</option><option>3J2</option><option>3K1</option></select></label>
+<label>Date<input id="date" type="date" required></label>
+<label>Starting Time<input id="start" type="time" required></label>
+<label>End Time<input id="end" type="time" required></label>
+<label>Employee / Inspector<input id="employee" type="text" required></label>
+<label>EMP No.<input id="empno" type="text" required></label>
+<label>Your Email<input id="email" type="email" placeholder="name@example.com"></label>
+<label>Coordinator Email<input id="managerEmail" type="email" placeholder="coordinator@example.com"></label>
+<label>CC Email<input id="ccEmail" type="email" placeholder="cc@example.com"></label>
+</div><section class="card section" data-section="Outside Area"><div class="section-title">1. Outside Area</div><div class="target">Company Target Score: <b>10</b></div><div class="item" id="item1" data-max="2">
+<h3>1. Outside Glass below 3 meters</h3>
+<div class="std">Free of dust, dirt, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q1" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q1" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q1" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q1" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark1" rows="2"></textarea></label>
+</div><div class="item" id="item2" data-max="2">
+<h3>2. Cladding below 3 meters</h3>
+<div class="std">Free of dust, dirt, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q2" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q2" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q2" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q2" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark2" rows="2"></textarea></label>
+</div><div class="item" id="item3" data-max="NA">
+<h3>3. Louvre below 3 meters</h3>
+<div class="std">Free of dust, dirt, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q3" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q3" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q3" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q3" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark3" rows="2"></textarea></label>
+</div><div class="item" id="item4" data-max="2">
+<h3>4. Signage</h3>
+<div class="std">Free of dust, dirt, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q4" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q4" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q4" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q4" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark4" rows="2"></textarea></label>
+</div><div class="item" id="item5" data-max="2">
+<h3>5. External Floor 5m Boundary</h3>
+<div class="std">Free of litter &amp; debris</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q5" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q5" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q5" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q5" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark5" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Entrances  1"><div class="section-title">2. Entrances  1</div><div class="target">Company Target Score: <b>15</b></div><div class="item" id="item6" data-max="2">
+<h3>1. Glasses below 3 M</h3>
+<div class="std">Free from dust, smear, streaks marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q6" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q6" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q6" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q6" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark6" rows="2"></textarea></label>
+</div><div class="item" id="item7" data-max="2">
+<h3>2. Floor and Skirting</h3>
+<div class="std">Free of litter, dust, dirt, footprints, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q7" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q7" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q7" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q7" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark7" rows="2"></textarea></label>
+</div><div class="item" id="item8" data-max="2">
+<h3>3. Garbage Bins</h3>
+<div class="std">Always at 75% fill and Odor Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q8" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q8" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q8" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q8" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark8" rows="2"></textarea></label>
+</div><div class="item" id="item9" data-max="2">
+<h3>4. Signage Boards and IDS</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q9" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q9" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q9" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q9" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark9" rows="2"></textarea></label>
+</div><div class="item" id="item10" data-max="2">
+<h3>5. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror ss panels free from dust, smear, Graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q10" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q10" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q10" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q10" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark10" rows="2"></textarea></label>
+</div><div class="item" id="item11" data-max="2">
+<h3>6. Escalators, glass sides &amp; Landing areas</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror ss panels   landing plates free from dust, smear, Graffiti dirty</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q11" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q11" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q11" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q11" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark11" rows="2"></textarea></label>
+</div><div class="item" id="item12" data-max="2">
+<h3>7. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, Stainless Steel railings and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q12" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q12" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q12" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q12" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark12" rows="2"></textarea></label>
+</div><div class="item" id="item13" data-max="1">
+<h3>8. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q13" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q13" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q13" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q13" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark13" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Entrances  2"><div class="section-title">3. Entrances  2</div><div class="target">Company Target Score: <b>16</b></div><div class="item" id="item14" data-max="2">
+<h3>1. Glasses below 3 M</h3>
+<div class="std">Free from dust, smear, streaks marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q14" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q14" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q14" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q14" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark14" rows="2"></textarea></label>
+</div><div class="item" id="item15" data-max="2">
+<h3>2. Floor and Skirting</h3>
+<div class="std">Free of litter, dust, dirt, footprints, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q15" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q15" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q15" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q15" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark15" rows="2"></textarea></label>
+</div><div class="item" id="item16" data-max="2">
+<h3>3. Garbage Bins</h3>
+<div class="std">Always at 75% fill and Odor Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q16" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q16" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q16" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q16" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark16" rows="2"></textarea></label>
+</div><div class="item" id="item17" data-max="2">
+<h3>4. Signage Boards and IDS</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q17" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q17" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q17" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q17" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark17" rows="2"></textarea></label>
+</div><div class="item" id="item18" data-max="2">
+<h3>5. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror ss panels free from dust, smear, Graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q18" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q18" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q18" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q18" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark18" rows="2"></textarea></label>
+</div><div class="item" id="item19" data-max="2">
+<h3>6. Escalators, glass sides &amp; Landing areas</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror ss panels   landing plates free from dust, smear, Graffiti dirty</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q19" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q19" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q19" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q19" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark19" rows="2"></textarea></label>
+</div><div class="item" id="item20" data-max="2">
+<h3>7. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, Stainless Steel railings and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q20" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q20" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q20" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q20" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark20" rows="2"></textarea></label>
+</div><div class="item" id="item21" data-max="2">
+<h3>8. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q21" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q21" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q21" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q21" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark21" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Concourse Level 1"><div class="section-title">4. Concourse Level 1</div><div class="target">Company Target Score: <b>30</b></div><div class="item" id="item22" data-max="2">
+<h3>1. Floor and Skirting</h3>
+<div class="std">Free of litter, dust, dirt, footprints, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q22" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q22" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q22" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q22" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark22" rows="2"></textarea></label>
+</div><div class="item" id="item23" data-max="2">
+<h3>2. Station Control Room</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q23" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q23" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q23" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q23" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark23" rows="2"></textarea></label>
+</div><div class="item" id="item24" data-max="2">
+<h3>3. Signage Boards and IDS</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q24" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q24" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q24" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q24" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark24" rows="2"></textarea></label>
+</div><div class="item" id="item25" data-max="2">
+<h3>4. TVM</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q25" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q25" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q25" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q25" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark25" rows="2"></textarea></label>
+</div><div class="item" id="item26" data-max="2">
+<h3>5. Wall and Panels 2mtrs</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q26" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q26" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q26" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q26" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark26" rows="2"></textarea></label>
+</div><div class="item" id="item27" data-max="2">
+<h3>6. AFC Gates</h3>
+<div class="std">Free from dust, litter stains, Marks’s, and glass fittings</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q27" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q27" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q27" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q27" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark27" rows="2"></textarea></label>
+</div><div class="item" id="item28" data-max="2">
+<h3>7. Balustrade Railing &amp; Glass</h3>
+<div class="std">Free from dust, stains, Marks’s, and glass fittings</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q28" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q28" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q28" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q28" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark28" rows="2"></textarea></label>
+</div><div class="item" id="item29" data-max="2">
+<h3>8. Retail Areas</h3>
+<div class="std">Free from litter dust, stains, Marks’s, and glass fittings</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q29" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q29" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q29" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q29" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark29" rows="2"></textarea></label>
+</div><div class="item" id="item30" data-max="2">
+<h3>9. Access controlled Doors-(Service door)</h3>
+<div class="std">Doors stains Free and marks free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q30" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q30" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q30" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q30" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark30" rows="2"></textarea></label>
+</div><div class="item" id="item31" data-max="2">
+<h3>10. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polish, door, hand railings, mirror ss panels free from dust, smear, Graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q31" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q31" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q31" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q31" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark31" rows="2"></textarea></label>
+</div><div class="item" id="item32" data-max="2">
+<h3>11. Escalators, glass sides &amp; Landing areas</h3>
+<div class="std">Cleaned glasses, Metal polish door, hand railings, mirror ss panels   landing plates free from dust, smear, Graffiti dirty</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q32" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q32" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q32" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q32" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark32" rows="2"></textarea></label>
+</div><div class="item" id="item33" data-max="2">
+<h3>12. Stair ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, Stainless Steel railings and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q33" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q33" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q33" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q33" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark33" rows="2"></textarea></label>
+</div><div class="item" id="item34" data-max="NA">
+<h3>13. Travelators</h3>
+<div class="std">Cleaned glasses, Metal polish, door, hand railings, mirror ss panels   landing plates free from dust, smear, Graffiti dirty</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q34" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q34" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q34" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q34" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark34" rows="2"></textarea></label>
+</div><div class="item" id="item35" data-max="2">
+<h3>14. All Glass below 3 meters</h3>
+<div class="std">Free from dirt, smear, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q35" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q35" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q35" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q35" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark35" rows="2"></textarea></label>
+</div><div class="item" id="item36" data-max="2">
+<h3>15. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q36" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q36" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q36" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q36" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark36" rows="2"></textarea></label>
+</div><div class="item" id="item37" data-max="2">
+<h3>16. Information Room 1</h3>
+<div class="std">Clean carpet, walls, door, ceiling and furniture</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q37" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q37" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q37" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q37" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark37" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Concourse Level 2"><div class="section-title">5. Concourse Level 2</div><div class="target">Company Target Score: <b>30</b></div><div class="item" id="item38" data-max="2">
+<h3>1. Floor and Skirting</h3>
+<div class="std">Free of litter, dust, dirt, footprints, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q38" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q38" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q38" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q38" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark38" rows="2"></textarea></label>
+</div><div class="item" id="item39" data-max="2">
+<h3>2. Station Control Room</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q39" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q39" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q39" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q39" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark39" rows="2"></textarea></label>
+</div><div class="item" id="item40" data-max="2">
+<h3>3. Signage Boards and IDS</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q40" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q40" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q40" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q40" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark40" rows="2"></textarea></label>
+</div><div class="item" id="item41" data-max="2">
+<h3>4. TVM</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q41" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q41" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q41" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q41" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark41" rows="2"></textarea></label>
+</div><div class="item" id="item42" data-max="2">
+<h3>5. Wall and Panels 2mtrs</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q42" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q42" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q42" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q42" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark42" rows="2"></textarea></label>
+</div><div class="item" id="item43" data-max="2">
+<h3>6. AFC Gates</h3>
+<div class="std">Free from dust, litter stains, Marks’s, and glass fittings</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q43" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q43" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q43" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q43" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark43" rows="2"></textarea></label>
+</div><div class="item" id="item44" data-max="2">
+<h3>7. Balustrade Railing &amp; Glass</h3>
+<div class="std">Free from dust, stains, Marks’s, and glass fittings</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q44" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q44" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q44" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q44" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark44" rows="2"></textarea></label>
+</div><div class="item" id="item45" data-max="2">
+<h3>8. Retail Areas</h3>
+<div class="std">Free from litter dust, stains, Marks’s, and glass fittings</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q45" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q45" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q45" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q45" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark45" rows="2"></textarea></label>
+</div><div class="item" id="item46" data-max="2">
+<h3>9. Access controlled Doors-(Service door)</h3>
+<div class="std">Doors stains Free and marks free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q46" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q46" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q46" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q46" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark46" rows="2"></textarea></label>
+</div><div class="item" id="item47" data-max="2">
+<h3>10. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polish, door, hand railings, mirror ss panels free from dust, smear, Graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q47" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q47" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q47" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q47" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark47" rows="2"></textarea></label>
+</div><div class="item" id="item48" data-max="2">
+<h3>11. Escalators, glass sides &amp; Landing areas</h3>
+<div class="std">Cleaned glasses, Metal polish door, hand railings, mirror ss panels   landing plates free from dust, smear, Graffiti dirty</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q48" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q48" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q48" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q48" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark48" rows="2"></textarea></label>
+</div><div class="item" id="item49" data-max="2">
+<h3>12. Stair ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, Stainless Steel railings and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q49" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q49" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q49" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q49" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark49" rows="2"></textarea></label>
+</div><div class="item" id="item50" data-max="NA">
+<h3>13. Travelators</h3>
+<div class="std">Cleaned glasses, Metal polish, door, hand railings, mirror ss panels   landing plates free from dust, smear, Graffiti dirty</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q50" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q50" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q50" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q50" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark50" rows="2"></textarea></label>
+</div><div class="item" id="item51" data-max="2">
+<h3>14. All Glass below 3 meters</h3>
+<div class="std">Free from dirt, smear, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q51" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q51" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q51" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q51" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark51" rows="2"></textarea></label>
+</div><div class="item" id="item52" data-max="2">
+<h3>15. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q52" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q52" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q52" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q52" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark52" rows="2"></textarea></label>
+</div><div class="item" id="item53" data-max="2">
+<h3>16. Information Room 2</h3>
+<div class="std">Clean carpet, walls, door, ceiling and furniture</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q53" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q53" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q53" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q53" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark53" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Mezzanine level"><div class="section-title">6. Mezzanine level</div><div class="target">Company Target Score: <b>NA</b></div><div class="item" id="item54" data-max="NA">
+<h3>1. Entrance Doors</h3>
+<div class="std">Free of litter, dust, dirt, footprints, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q54" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q54" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q54" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q54" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark54" rows="2"></textarea></label>
+</div><div class="item" id="item55" data-max="NA">
+<h3>2. Garbage Bins</h3>
+<div class="std">Always at 50% fill and Odor Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q55" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q55" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q55" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q55" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark55" rows="2"></textarea></label>
+</div><div class="item" id="item56" data-max="NA">
+<h3>3. Floor and Skirting</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q56" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q56" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q56" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q56" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark56" rows="2"></textarea></label>
+</div><div class="item" id="item57" data-max="NA">
+<h3>4. Sitting Areas</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q57" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q57" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q57" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q57" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark57" rows="2"></textarea></label>
+</div><div class="item" id="item58" data-max="NA">
+<h3>5. External Walls</h3>
+<div class="std">Free of litter &amp; debris</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q58" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q58" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q58" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q58" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark58" rows="2"></textarea></label>
+</div><div class="item" id="item59" data-max="NA">
+<h3>6. Wall and Panels 2mtrs below</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q59" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q59" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q59" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q59" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark59" rows="2"></textarea></label>
+</div><div class="item" id="item60" data-max="NA">
+<h3>7. Handrails</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q60" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q60" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q60" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q60" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark60" rows="2"></textarea></label>
+</div><div class="item" id="item61" data-max="NA">
+<h3>8. Sign/Notice/Advertisement boards</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q61" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q61" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q61" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q61" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark61" rows="2"></textarea></label>
+</div><div class="item" id="item62" data-max="NA">
+<h3>9. External Area Limestone</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q62" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q62" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q62" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q62" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark62" rows="2"></textarea></label>
+</div><div class="item" id="item63" data-max="NA">
+<h3>10. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror, Stainless steel panels free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q63" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q63" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q63" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q63" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark63" rows="2"></textarea></label>
+</div><div class="item" id="item64" data-max="NA">
+<h3>11. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, stainless Steel rails and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q64" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q64" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q64" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q64" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark64" rows="2"></textarea></label>
+</div><div class="item" id="item65" data-max="NA">
+<h3>12. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q65" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q65" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q65" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q65" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark65" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Back Of the House"><div class="section-title">7. Back Of the House</div><div class="target">Company Target Score: <b>8</b></div><div class="item" id="item66" data-max="2">
+<h3>1. Floor and Skirting</h3>
+<div class="std">Free of litter, dust, dirt, footprints, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q66" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q66" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q66" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q66" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark66" rows="2"></textarea></label>
+</div><div class="item" id="item67" data-max="2">
+<h3>2. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q67" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q67" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q67" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q67" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark67" rows="2"></textarea></label>
+</div><div class="item" id="item68" data-max="2">
+<h3>3. Emergancy Exit</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q68" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q68" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q68" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q68" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark68" rows="2"></textarea></label>
+</div><div class="item" id="item69" data-max="2">
+<h3>4. Walls &amp; Doors</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q69" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q69" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q69" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q69" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark69" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Public Facilities"><div class="section-title">8. Public Facilities</div><div class="target">Company Target Score: <b>52</b></div><div class="item" id="item70" data-max="NA">
+<h3>1. Masjid</h3>
+<div class="std">Carpet, Quran table, Imam area, glass, abulation area, washroom, lift, stair case, shoe rack</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q70" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q70" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q70" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q70" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark70" rows="2"></textarea></label>
+</div><div class="item" id="item71" data-max="10">
+<h3>2. P&amp;R</h3>
+<div class="std">Dusting, wall, floor, curve, P&amp;R payment counter, signages, waste collection room</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q71" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q71" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q71" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q71" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark71" rows="2"></textarea></label>
+</div><div class="item" id="item72" data-max="2">
+<h3>3. Male Washrooms</h3>
+<div class="std">Sanitization of urinal, cubicle, vanity counter, odor free, steel fittings free of marks, all surfaces shall be free of grime, soap, mud, and smudges. Mirrors, Glass doors stain free, well equipped with the necessary toiletries, bins cleared and cleaned.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q72" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q72" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q72" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q72" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark72" rows="2"></textarea></label>
+</div><div class="item" id="item73" data-max="2">
+<h3>4. Health Faucet</h3>
+<div class="std">Cleaned and wipe with a Disinfectant</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q73" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q73" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q73" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q73" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark73" rows="2"></textarea></label>
+</div><div class="item" id="item74" data-max="2">
+<h3>5. Washroom Mirrors</h3>
+<div class="std">Scrub with a solution of water / Remove the marks / Dry the Surface</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q74" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q74" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q74" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q74" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark74" rows="2"></textarea></label>
+</div><div class="item" id="item75" data-max="2">
+<h3>6. WC</h3>
+<div class="std">Scrub with a Chemical solution of water / Remove the marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q75" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q75" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q75" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q75" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark75" rows="2"></textarea></label>
+</div><div class="item" id="item76" data-max="2">
+<h3>7. All Sanitary Fittings</h3>
+<div class="std">Scrub with a Chemical solution / Remove the marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q76" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q76" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q76" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q76" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark76" rows="2"></textarea></label>
+</div><div class="item" id="item77" data-max="2">
+<h3>8. Soap Dispensers</h3>
+<div class="std">Dust the surface / Wipe with Chemical Solution / Fill the Soap</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q77" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q77" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q77" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q77" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark77" rows="2"></textarea></label>
+</div><div class="item" id="item78" data-max="2">
+<h3>9. Tissue Holders</h3>
+<div class="std">Dust the surface / Wipe with Chemical Solution</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q78" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q78" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q78" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q78" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark78" rows="2"></textarea></label>
+</div><div class="item" id="item79" data-max="2">
+<h3>10. Floor Drains</h3>
+<div class="std">Remove the Blockage / Use the Drain Clear Chemical</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q79" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q79" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q79" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q79" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark79" rows="2"></textarea></label>
+</div><div class="item" id="item80" data-max="2">
+<h3>11. Floor</h3>
+<div class="std">Dry Mop / Wet Mop / Scrubbing the Floor</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q80" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q80" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q80" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q80" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark80" rows="2"></textarea></label>
+</div><div class="item" id="item81" data-max="2">
+<h3>12. Wall and Door</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q81" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q81" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q81" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q81" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark81" rows="2"></textarea></label>
+</div><div class="item" id="item82" data-max="2">
+<h3>13. Celling &amp; AC vents</h3>
+<div class="std">Dust the surface / Used the damp Duster to wipe the surface</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q82" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q82" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q82" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q82" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark82" rows="2"></textarea></label>
+</div><div class="item" id="item83" data-max="2">
+<h3>14. Replenishment</h3>
+<div class="std">Bin Liners, Hand Soap, “C” Fold tissue and Toilet Rolls</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q83" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q83" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q83" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q83" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark83" rows="2"></textarea></label>
+</div><div class="item" id="item84" data-max="2">
+<h3>15. Female Washrooms</h3>
+<div class="std">Sanitization of urinal, cubicle, vanity counter, Odor free, steel fittings free of marks, all surfaces shall be free of grime, soap, mud, and smudges. Mirrors, glass doors stain free, well equipped with the necessary toiletries</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q84" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q84" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q84" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q84" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark84" rows="2"></textarea></label>
+</div><div class="item" id="item85" data-max="2">
+<h3>16. Health Faucet</h3>
+<div class="std">Cleaned and wipe with a Disinfectant</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q85" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q85" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q85" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q85" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark85" rows="2"></textarea></label>
+</div><div class="item" id="item86" data-max="2">
+<h3>17. Washroom Mirrors</h3>
+<div class="std">Scrub with a solution of water / Remove the marks / Dry the Surface</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q86" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q86" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q86" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q86" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark86" rows="2"></textarea></label>
+</div><div class="item" id="item87" data-max="2">
+<h3>18. WC</h3>
+<div class="std">Scrub with a Chemical solution of water / Remove the marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q87" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q87" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q87" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q87" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark87" rows="2"></textarea></label>
+</div><div class="item" id="item88" data-max="2">
+<h3>19. All Sanitary Fittings</h3>
+<div class="std">Scrub with a Chemical solution / Remove the marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q88" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q88" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q88" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q88" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark88" rows="2"></textarea></label>
+</div><div class="item" id="item89" data-max="2">
+<h3>20. Soap Dispensers</h3>
+<div class="std">Dust the surface / Wipe with Chemical Solution / Fill the Soap</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q89" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q89" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q89" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q89" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark89" rows="2"></textarea></label>
+</div><div class="item" id="item90" data-max="2">
+<h3>21. Tissue Holders</h3>
+<div class="std">Dust the surface / Wipe with Chemical Solution</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q90" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q90" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q90" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q90" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark90" rows="2"></textarea></label>
+</div><div class="item" id="item91" data-max="2">
+<h3>22. Floor Drains</h3>
+<div class="std">Remove the Blockage / Use the Drain Clear Chemical</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q91" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q91" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q91" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q91" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark91" rows="2"></textarea></label>
+</div><div class="item" id="item92" data-max="2">
+<h3>23. Floor</h3>
+<div class="std">Dry Mop / Wet Mop / Scrubbing the Floor</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q92" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q92" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q92" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q92" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark92" rows="2"></textarea></label>
+</div><div class="item" id="item93" data-max="2">
+<h3>24. Wall and Door</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q93" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q93" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q93" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q93" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark93" rows="2"></textarea></label>
+</div><div class="item" id="item94" data-max="2">
+<h3>25. Celling &amp; AC vents</h3>
+<div class="std">Dust the surface / Used the damp Duster to wipe the surface</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q94" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q94" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q94" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q94" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark94" rows="2"></textarea></label>
+</div><div class="item" id="item95" data-max="2">
+<h3>26. Replenishment</h3>
+<div class="std">Bin Liners, Hand Soap, “C” Fold tissue and Toilet Rolls</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q95" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q95" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q95" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q95" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark95" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Entrance 3"><div class="section-title">9. Entrance 3</div><div class="target">Company Target Score: <b>26</b></div><div class="item" id="item96" data-max="2">
+<h3>1. Entrance Glasses</h3>
+<div class="std">Free from dust, smear, streaks marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q96" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q96" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q96" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q96" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark96" rows="2"></textarea></label>
+</div><div class="item" id="item97" data-max="2">
+<h3>2. External Floor 3m Boundary</h3>
+<div class="std">Free of litter &amp; debris</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q97" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q97" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q97" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q97" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark97" rows="2"></textarea></label>
+</div><div class="item" id="item98" data-max="2">
+<h3>3. Entrance Doors</h3>
+<div class="std">Free of litter, dust, dirt, footprints, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q98" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q98" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q98" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q98" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark98" rows="2"></textarea></label>
+</div><div class="item" id="item99" data-max="2">
+<h3>4. Garbage Bins</h3>
+<div class="std">Always at 50% fill and Odor Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q99" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q99" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q99" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q99" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark99" rows="2"></textarea></label>
+</div><div class="item" id="item100" data-max="2">
+<h3>5. Floor and Skirting</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q100" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q100" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q100" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q100" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark100" rows="2"></textarea></label>
+</div><div class="item" id="item101" data-max="2">
+<h3>6. Wall and Panels 2mtrs below</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q101" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q101" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q101" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q101" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark101" rows="2"></textarea></label>
+</div><div class="item" id="item102" data-max="2">
+<h3>7. Sitting Areas</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q102" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q102" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q102" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q102" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark102" rows="2"></textarea></label>
+</div><div class="item" id="item103" data-max="2">
+<h3>8. Elevators</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror, Stainless steel panels free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q103" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q103" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q103" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q103" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark103" rows="2"></textarea></label>
+</div><div class="item" id="item104" data-max="2">
+<h3>9. Sign/Notice/Advertisement boards</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q104" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q104" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q104" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q104" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark104" rows="2"></textarea></label>
+</div><div class="item" id="item105" data-max="2">
+<h3>10. External Area Limestone</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q105" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q105" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q105" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q105" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark105" rows="2"></textarea></label>
+</div><div class="item" id="item106" data-max="2">
+<h3>11. Escalators, glass sides &amp; Landing areas</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror ss panels   landing plates free from dust, smear, Graffiti dirty</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q106" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q106" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q106" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q106" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark106" rows="2"></textarea></label>
+</div><div class="item" id="item107" data-max="2">
+<h3>12. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, s.s railings and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q107" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q107" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q107" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q107" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark107" rows="2"></textarea></label>
+</div><div class="item" id="item108" data-max="2">
+<h3>13. Celling &amp; AC vents</h3>
+<div class="std">Dust the surface / Used the damp Duster to wipe the surface</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q108" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q108" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q108" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q108" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark108" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Foot Over Bridge"><div class="section-title">10. Foot Over Bridge</div><div class="target">Company Target Score: <b>NA</b></div><div class="item" id="item109" data-max="NA">
+<h3>1. Garbage Bins</h3>
+<div class="std">50% fill and Odour Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q109" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q109" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q109" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q109" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark109" rows="2"></textarea></label>
+</div><div class="item" id="item110" data-max="NA">
+<h3>2. Floor and Skirting</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q110" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q110" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q110" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q110" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark110" rows="2"></textarea></label>
+</div><div class="item" id="item111" data-max="NA">
+<h3>3. Wall and Panels 2mtrs below</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q111" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q111" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q111" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q111" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark111" rows="2"></textarea></label>
+</div><div class="item" id="item112" data-max="NA">
+<h3>4. Handrails</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q112" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q112" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q112" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q112" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark112" rows="2"></textarea></label>
+</div><div class="item" id="item113" data-max="NA">
+<h3>5. Sign/Notice/Advertisement boards</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q113" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q113" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q113" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q113" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark113" rows="2"></textarea></label>
+</div><div class="item" id="item114" data-max="NA">
+<h3>6. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror, Stainless steel panels free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q114" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q114" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q114" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q114" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark114" rows="2"></textarea></label>
+</div><div class="item" id="item115" data-max="NA">
+<h3>7. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, stainless Steel rails and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q115" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q115" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q115" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q115" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark115" rows="2"></textarea></label>
+</div><div class="item" id="item116" data-max="NA">
+<h3>8. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q116" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q116" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q116" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q116" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark116" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Subway"><div class="section-title">11. Subway</div><div class="target">Company Target Score: <b>NA</b></div><div class="item" id="item117" data-max="NA">
+<h3>1. Entrance Doors</h3>
+<div class="std">Free of litter, dust, dirt, footprints, liquid spills, stains, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q117" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q117" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q117" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q117" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark117" rows="2"></textarea></label>
+</div><div class="item" id="item118" data-max="NA">
+<h3>2. Garbage Bins</h3>
+<div class="std">Always at 50% fill and Odor Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q118" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q118" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q118" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q118" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark118" rows="2"></textarea></label>
+</div><div class="item" id="item119" data-max="NA">
+<h3>3. Floor and Skirting</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q119" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q119" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q119" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q119" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark119" rows="2"></textarea></label>
+</div><div class="item" id="item120" data-max="NA">
+<h3>4. Sitting Areas</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q120" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q120" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q120" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q120" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark120" rows="2"></textarea></label>
+</div><div class="item" id="item121" data-max="NA">
+<h3>5. External Walls</h3>
+<div class="std">Free of litter &amp; debris</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q121" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q121" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q121" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q121" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark121" rows="2"></textarea></label>
+</div><div class="item" id="item122" data-max="NA">
+<h3>6. Wall and Panels 2mtrs below</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q122" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q122" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q122" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q122" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark122" rows="2"></textarea></label>
+</div><div class="item" id="item123" data-max="NA">
+<h3>7. Handrails</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q123" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q123" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q123" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q123" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark123" rows="2"></textarea></label>
+</div><div class="item" id="item124" data-max="NA">
+<h3>8. Sign/Notice/Advertisement boards</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q124" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q124" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q124" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q124" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark124" rows="2"></textarea></label>
+</div><div class="item" id="item125" data-max="NA">
+<h3>9. External Area Limestone</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q125" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q125" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q125" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q125" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark125" rows="2"></textarea></label>
+</div><div class="item" id="item126" data-max="NA">
+<h3>10. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror, Stainless steel panels free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q126" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q126" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q126" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q126" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark126" rows="2"></textarea></label>
+</div><div class="item" id="item127" data-max="NA">
+<h3>11. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, stainless Steel rails and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q127" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q127" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q127" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q127" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark127" rows="2"></textarea></label>
+</div><div class="item" id="item128" data-max="NA">
+<h3>12. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q128" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q128" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q128" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q128" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark128" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Platform 1"><div class="section-title">12. Platform 1</div><div class="target">Company Target Score: <b>20</b></div><div class="item" id="item129" data-max="2">
+<h3>1. Floor and Skirting</h3>
+<div class="std">Dry Mop / Wet Mop / Scrubbing the Floor</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q129" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q129" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q129" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q129" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark129" rows="2"></textarea></label>
+</div><div class="item" id="item130" data-max="2">
+<h3>2. Sign/Notice/Advertisement boards</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q130" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q130" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q130" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q130" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark130" rows="2"></textarea></label>
+</div><div class="item" id="item131" data-max="2">
+<h3>3. Sitting Areas/ Chairs</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q131" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q131" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q131" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q131" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark131" rows="2"></textarea></label>
+</div><div class="item" id="item132" data-max="2">
+<h3>4. Wall and Panels 2mtrs below/ PSD or MSD</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q132" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q132" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q132" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q132" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark132" rows="2"></textarea></label>
+</div><div class="item" id="item133" data-max="2">
+<h3>5. Garbage Bins</h3>
+<div class="std">Always at 50% fill and Odor Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q133" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q133" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q133" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q133" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark133" rows="2"></textarea></label>
+</div><div class="item" id="item134" data-max="2">
+<h3>6. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror, Stainless steel panels free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q134" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q134" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q134" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q134" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark134" rows="2"></textarea></label>
+</div><div class="item" id="item135" data-max="2">
+<h3>7. Escalators, glass sides &amp; Landing areas</h3>
+<div class="std">Cleaned glasses, Metal polished, hand railings, mirror ss panels   landing plates free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q135" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q135" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q135" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q135" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark135" rows="2"></textarea></label>
+</div><div class="item" id="item136" data-max="2">
+<h3>8. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, stainless Steel rails and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q136" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q136" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q136" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q136" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark136" rows="2"></textarea></label>
+</div><div class="item" id="item137" data-max="2">
+<h3>9. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q137" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q137" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q137" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q137" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark137" rows="2"></textarea></label>
+</div><div class="item" id="item138" data-max="2">
+<h3>10. PSD</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q138" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q138" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q138" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q138" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark138" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Platform 2"><div class="section-title">13. Platform 2</div><div class="target">Company Target Score: <b>20</b></div><div class="item" id="item139" data-max="2">
+<h3>1. Floor and Skirting</h3>
+<div class="std">Dry Mop / Wet Mop / Scrubbing the Floor</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q139" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q139" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q139" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q139" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark139" rows="2"></textarea></label>
+</div><div class="item" id="item140" data-max="2">
+<h3>2. Sign/Notice/Advertisement boards</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q140" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q140" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q140" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q140" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark140" rows="2"></textarea></label>
+</div><div class="item" id="item141" data-max="2">
+<h3>3. Sitting Areas/ Chairs</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q141" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q141" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q141" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q141" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark141" rows="2"></textarea></label>
+</div><div class="item" id="item142" data-max="2">
+<h3>4. Wall and Panels 2mtrs below/ PSD or MSD</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q142" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q142" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q142" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q142" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark142" rows="2"></textarea></label>
+</div><div class="item" id="item143" data-max="2">
+<h3>5. Garbage Bins</h3>
+<div class="std">Always at 50% fill and Odor Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q143" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q143" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q143" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q143" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark143" rows="2"></textarea></label>
+</div><div class="item" id="item144" data-max="2">
+<h3>6. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror, Stainless steel panels free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q144" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q144" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q144" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q144" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark144" rows="2"></textarea></label>
+</div><div class="item" id="item145" data-max="2">
+<h3>7. Escalators, glass sides &amp; Landing areas</h3>
+<div class="std">Cleaned glasses, Metal polished, hand railings, mirror ss panels   landing plates free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q145" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q145" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q145" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q145" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark145" rows="2"></textarea></label>
+</div><div class="item" id="item146" data-max="2">
+<h3>8. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, stainless Steel rails and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q146" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q146" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q146" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q146" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark146" rows="2"></textarea></label>
+</div><div class="item" id="item147" data-max="2">
+<h3>9. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q147" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q147" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q147" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q147" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark147" rows="2"></textarea></label>
+</div><div class="item" id="item148" data-max="2">
+<h3>10. PSD</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q148" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q148" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q148" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q148" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark148" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Platform 3"><div class="section-title">14. Platform 3</div><div class="target">Company Target Score: <b>NA</b></div><div class="item" id="item149" data-max="NA">
+<h3>1. Floor and Skirting</h3>
+<div class="std">Dry Mop / Wet Mop / Scrubbing the Floor</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q149" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q149" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q149" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q149" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark149" rows="2"></textarea></label>
+</div><div class="item" id="item150" data-max="NA">
+<h3>2. Sign/Notice/Advertisement boards</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q150" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q150" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q150" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q150" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark150" rows="2"></textarea></label>
+</div><div class="item" id="item151" data-max="NA">
+<h3>3. Sitting Areas/ Chairs</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q151" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q151" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q151" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q151" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark151" rows="2"></textarea></label>
+</div><div class="item" id="item152" data-max="NA">
+<h3>4. Wall and Panels 2mtrs below/ PSD or MSD</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q152" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q152" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q152" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q152" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark152" rows="2"></textarea></label>
+</div><div class="item" id="item153" data-max="NA">
+<h3>5. Garbage Bins</h3>
+<div class="std">Always at 50% fill and Odor Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q153" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q153" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q153" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q153" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark153" rows="2"></textarea></label>
+</div><div class="item" id="item154" data-max="NA">
+<h3>6. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror, Stainless steel panels free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q154" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q154" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q154" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q154" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark154" rows="2"></textarea></label>
+</div><div class="item" id="item155" data-max="NA">
+<h3>7. Escalators, glass sides &amp; Landing areas</h3>
+<div class="std">Cleaned glasses, Metal polished, hand railings, mirror ss panels   landing plates free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q155" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q155" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q155" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q155" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark155" rows="2"></textarea></label>
+</div><div class="item" id="item156" data-max="NA">
+<h3>8. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, stainless Steel rails and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q156" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q156" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q156" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q156" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark156" rows="2"></textarea></label>
+</div><div class="item" id="item157" data-max="NA">
+<h3>9. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q157" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q157" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q157" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q157" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark157" rows="2"></textarea></label>
+</div><div class="item" id="item158" data-max="NA">
+<h3>10. PSD</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q158" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q158" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q158" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q158" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark158" rows="2"></textarea></label>
+</div></section><section class="card section" data-section="Platform 4"><div class="section-title">15. Platform 4</div><div class="target">Company Target Score: <b>NA</b></div><div class="item" id="item159" data-max="NA">
+<h3>1. Floor and Skirting</h3>
+<div class="std">Dry Mop / Wet Mop / Scrubbing the Floor</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q159" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q159" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q159" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q159" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark159" rows="2"></textarea></label>
+</div><div class="item" id="item160" data-max="NA">
+<h3>2. Sign/Notice/Advertisement boards</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q160" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q160" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q160" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q160" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark160" rows="2"></textarea></label>
+</div><div class="item" id="item161" data-max="NA">
+<h3>3. Sitting Areas/ Chairs</h3>
+<div class="std">Free from dirt, grime, dust, graffiti, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q161" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q161" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q161" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q161" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark161" rows="2"></textarea></label>
+</div><div class="item" id="item162" data-max="NA">
+<h3>4. Wall and Panels 2mtrs below/ PSD or MSD</h3>
+<div class="std">Free from dust, smear, streaks marks and   grafting</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q162" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q162" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q162" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q162" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark162" rows="2"></textarea></label>
+</div><div class="item" id="item163" data-max="NA">
+<h3>5. Garbage Bins</h3>
+<div class="std">Always at 50% fill and Odor Free</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q163" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q163" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q163" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q163" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark163" rows="2"></textarea></label>
+</div><div class="item" id="item164" data-max="NA">
+<h3>6. Elevators &amp; Stainless Steel</h3>
+<div class="std">Cleaned glasses, Metal polished, door, hand railings, mirror, Stainless steel panels free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q164" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q164" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q164" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q164" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark164" rows="2"></textarea></label>
+</div><div class="item" id="item165" data-max="NA">
+<h3>7. Escalators, glass sides &amp; Landing areas</h3>
+<div class="std">Cleaned glasses, Metal polished, hand railings, mirror ss panels   landing plates free from dust, smear and graffiti</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q165" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q165" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q165" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q165" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark165" rows="2"></textarea></label>
+</div><div class="item" id="item166" data-max="NA">
+<h3>8. Stair Ways</h3>
+<div class="std">Staircases and sidewalls. Dust, dirt, stains, loose sand, footprints, stainless Steel rails and panels cleaned and polished.</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q166" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q166" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q166" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q166" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark166" rows="2"></textarea></label>
+</div><div class="item" id="item167" data-max="NA">
+<h3>9. Ceiling &amp; AC vents</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q167" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q167" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q167" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q167" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark167" rows="2"></textarea></label>
+</div><div class="item" id="item168" data-max="NA">
+<h3>10. PSD</h3>
+<div class="std">Free from dirt, grime, dust, and marks</div>
+<div class="choices">
+<label class="choice"><input type="radio" name="q168" value="0">0 Not satisfactory</label>
+<label class="choice"><input type="radio" name="q168" value="1">1 Partly satisfactory</label>
+<label class="choice"><input type="radio" name="q168" value="2">2 Satisfactory</label>
+<label class="choice"><input type="radio" name="q168" value="NA">NA Not applicable</label>
+</div>
+<label>Remarks<textarea id="remark168" rows="2"></textarea></label>
+</div></section><div id="problemSummary" class="problem-summary" style="display:none"></div><div id="submitStatus" class="card" style="display:none"></div><div id="msg"></div><div id="final" class="card"></div></div>
+<footer><b id="foot">0 / 168 answered</b><button type="button" id="submit" aria-disabled="false">SUBMIT / إرسال</button></footer>
+<script>
+const TOTAL=168;
+function calc(){
+ let answered=0,actual=0,target=0,na=0;
+ for(let i=1;i<=TOTAL;i++){
+   const x=document.querySelector('input[name="q'+i+'"]:checked');
+   if(!x) continue;
+   answered++;
+   if(x.value==='NA'){na++;continue;}
+   actual+=Number(x.value);
+   target+=2;
+ }
+ const pct=target?Math.round(actual/target*100):0;
+ return {answered,actual,target,na,pct};
+}
+
+function refreshProblems(){
+ let count=0;
+ for(let i=1;i<=TOTAL;i++){
+   const item=document.getElementById('item'+i);
+   const selected=document.querySelector('input[name="q'+i+'"]:checked');
+   const remark=(document.getElementById('remark'+i)?.value||'').trim();
+   const isProblem=(!!selected && selected.value==='0') || remark.length>0;
+   item.classList.toggle('problem-item',isProblem);
+   if(isProblem) count++;
+ }
+ const ps=document.getElementById('problemSummary');
+ if(ps){
+   ps.style.display=count?'block':'none';
+   ps.innerHTML=count ? '⚠ Problems / الملاحظات المسجلة: <b>'+count+'</b> — البنود موضحة باللون الأحمر.' : '';
+ }
+}
+
+function update(){
+ const sb=document.getElementById('submit'); if(sb) sb.disabled=false;
+ const c=calc();
+ refreshProblems();
+ document.getElementById('ans').textContent=c.answered+' / '+TOTAL;
+ document.getElementById('pct').textContent=c.pct+'%';
+ document.getElementById('score').textContent=c.actual+' / '+c.target;
+ document.getElementById('foot').textContent=c.answered+' / '+TOTAL+' answered';
+ const p=document.getElementById('pct');
+ p.style.color=c.pct<55?'#c62828':(c.pct<80?'#d18b00':'#2e7d32');
+ const metaOK=['station','date','start','end','employee','empno'].every(id=>document.getElementById(id).value.trim()!=='');
+ document.getElementById('submit').disabled=false;
+}
+document.querySelectorAll('input[type=radio]').forEach(el=>{
+ el.addEventListener('click',update);
+ el.addEventListener('change',update);
+});
+document.querySelectorAll('#station,#date,#start,#end,#employee,#empno').forEach(el=>el.addEventListener('input',update));
+document.querySelectorAll('textarea').forEach(el=>el.addEventListener('input',refreshProblems));
+
+document.querySelectorAll('input[type=radio]').forEach(el=>{
+ el.addEventListener('change',function(){
+   const item=this.closest('.item');
+   if(item) item.classList.remove('missing-answer');
+ });
+});
+
+const submitButton=document.getElementById('submit');
+submitButton.disabled=false;
+submitButton.removeAttribute('disabled');
+submitButton.addEventListener('pointerdown',function(){
+  this.style.transform='scale(.98)';
+});
+submitButton.addEventListener('pointerup',function(){
+  this.style.transform='';
+});
+document.getElementById('submit').addEventListener('click',async function(e){
+ e.preventDefault();
+ e.stopPropagation();
+
+ this.disabled=false;
+ const tapStatus=document.getElementById('submitStatus');
+ tapStatus.style.display='block';
+ tapStatus.style.background='#eef7ee';
+ tapStatus.innerHTML='<b>Checking form... / جاري التحقق من النموذج...</b>';
+ document.querySelectorAll('.item').forEach(x=>x.classList.remove('missing','missing-answer'));
+ let first=null,missing=0;
+ const precheck=calc();
+ if(precheck.answered<TOTAL){
+   for(let i=1;i<=TOTAL;i++){
+     const checked=document.querySelectorAll('input[name="q'+i+'"]:checked');
+     if(checked.length===0){
+       missing++; const el=document.getElementById('item'+i); if(el)el.classList.add('missing-answer'); if(!first)first=el;
+     }
+   }
+ }
+ if(missing){
+   const firstNo=first ? first.id.replace('item','') : '';
+   const text='⚠ لا يمكن الإرسال — عندك '+missing+' خانة بدون اختيار. أول خانة ناقصة رقم '+firstNo+'.';
+   const m=document.getElementById('msg');m.style.display='block';m.textContent=text;
+   tapStatus.style.background='#fff0f0';tapStatus.innerHTML='<b>'+text+'</b>';
+   const a=document.getElementById('missingAlert');a.style.display='block';a.textContent=text;
+   setTimeout(()=>{a.style.display='none'},5000);
+   if(first){
+     first.scrollIntoView({behavior:'auto',block:'center'});
+     setTimeout(()=>{const r=first.querySelector('input[type=radio]'); if(r)r.focus({preventScroll:true});},450);
+   }
+   return;
+ }
+
+ const requiredMeta=[
+   ['station','Station / المحطة'],
+   ['date','Date / التاريخ'],
+   ['start','Starting Time / وقت البداية'],
+   ['end','End Time / وقت النهاية'],
+   ['employee','Employee / Inspector'],
+   ['empno','EMP No.']
+ ];
+ for(const [id,label] of requiredMeta){
+   const el=document.getElementById(id);
+   if(!el || !String(el.value||'').trim()){
+     const a=document.getElementById('missingAlert');
+     if(a){a.style.display='block';a.textContent='⚠ لا يمكن الإرسال — أكمل: '+label;setTimeout(()=>a.style.display='none',5000);}
+     if(el){el.scrollIntoView({behavior:'auto',block:'center'});setTimeout(()=>el.focus(),100);}
+     return;
+   }
+ }
+ const c=calc();
+ const answers=[];
+ for(let i=1;i<=TOTAL;i++){
+   const item=document.getElementById('item'+i);
+   const selected=document.querySelector('input[name="q'+i+'"]:checked');
+   const remarks=document.getElementById('remark'+i)?.value || '';
+   answers.push({
+     question_no:i,
+     section:item.closest('.section')?.dataset.section || '',
+     item:item.querySelector('h3')?.textContent || '',
+     standard:item.querySelector('.std')?.textContent || '',
+     score:selected.value,
+     remarks:remarks,
+     problem:(selected.value==='0' || remarks.trim().length>0)
+   });
+ }
+
+ const payload={
+   inspection_id:document.getElementById('inspectionId').textContent,
+   form_version:window.COMPANY_CONFIG.FORM_VERSION,
+   submitted_at:new Date().toISOString(),
+   station:document.getElementById('station').value,
+   inspection_date:document.getElementById('date').value,
+   starting_time:document.getElementById('start').value,
+   end_time:document.getElementById('end').value,
+   employee_name:document.getElementById('employee').value,
+   employee_no:document.getElementById('empno').value,
+   actual_score:c.actual,
+   applicable_target:c.target,
+   percentage:c.pct,
+   na_count:c.na,
+   answers:answers
+ };
+
+ const status=document.getElementById('submitStatus');
+ status.style.display='block';
+ status.innerHTML='<b>Submitting inspection...</b>';
+ this.disabled=false;
+
+ try{
+   const dbRow={
+     inspection_id: payload.inspection_id,
+     station: payload.station,
+     employee_name: payload.employee_name,
+     employee_no: payload.employee_no,
+     start_time: payload.starting_time,
+     end_time: payload.end_time,
+     score_achieved: payload.actual_score,
+     target_score: payload.applicable_target,
+     score_percent: payload.percentage,
+     answered_count: 168,
+     total_items: 168,
+     answers: payload.answers
+   };
+   const res=await fetch('https://fowibmxsousmpuiafzch.supabase.co/rest/v1/station_inspections',{
+     method:'POST',
+     headers:{
+       'Content-Type':'application/json',
+       'apikey':'sb_publishable_P4M78GQ41VDK4xXfBcgnNg_AtBSEFvl',
+       'Authorization':'Bearer sb_publishable_P4M78GQ41VDK4xXfBcgnNg_AtBSEFvl',
+       'Prefer':'return=minimal'
+     },
+     body:JSON.stringify(dbRow)
+   });
+   if(!res.ok){
+     const detail=await res.text();
+     throw new Error('HTTP '+res.status+' '+detail);
+   }
+   status.style.background='#edf7ee';
+   status.innerHTML='<h2>Submitted / تم الإرسال</h2><b>Inspection ID: '+payload.inspection_id+'</b><br>Overall Score: <b>'+payload.percentage+'%</b><br>Saved successfully. Management can view this inspection from the separate dashboard.';
+   const submitBtn=document.getElementById('submit');
+   if(submitBtn){submitBtn.style.display='none';submitBtn.disabled=true;}
+   document.getElementById('final').innerHTML='<h2>Inspection Result</h2><b>Actual Score: '+c.actual+' / '+c.target+'</b><br><b>Overall Score: '+c.pct+'%</b><br>NA selections: '+c.na;
+ }catch(err){
+   status.style.background='#fff4e5';
+   status.innerHTML='<h2>Submission failed / تعذر الإرسال</h2><b>تعذر الوصول إلى قاعدة البيانات من هذا الملف المحلي.</b><br>افتح النموذج من رابط ويب HTTPS وليس من edge://external-file أو file://.<br><small>'+String(err)+'</small>';
+   this.disabled=false;
+ }
+});
+
+function makeInspectionId(){
+ const d=new Date();
+ const pad=n=>String(n).padStart(2,'0');
+ const stamp=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+ return 'INS-'+stamp+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+}
+// Keep employee profile + email recipients between refreshes.
+// Inspection answers/remarks and inspection details start fresh on every refresh.
+const EMPLOYEE_PROFILE_KEY='station_cleaning_employee_profile_v2';
+
+function saveEmployeeProfile(){
+  try{
+    localStorage.setItem(EMPLOYEE_PROFILE_KEY, JSON.stringify({
+      employee: document.getElementById('employee')?.value || '',
+      empno: document.getElementById('empno')?.value || '',
+      email: document.getElementById('email')?.value || '',
+      managerEmail: document.getElementById('managerEmail')?.value || '',
+      ccEmail: document.getElementById('ccEmail')?.value || ''
+    }));
+  }catch(e){}
+}
+
+function restoreEmployeeProfile(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(EMPLOYEE_PROFILE_KEY) || '{}');
+    const employee=document.getElementById('employee');
+    const empno=document.getElementById('empno');
+    const email=document.getElementById('email');
+    const managerEmail=document.getElementById('managerEmail');
+    const ccEmail=document.getElementById('ccEmail');
+    if(employee && saved.employee) employee.value=saved.employee;
+    if(empno && saved.empno) empno.value=saved.empno;
+    if(email && saved.email) email.value=saved.email;
+    if(managerEmail && saved.managerEmail) managerEmail.value=saved.managerEmail;
+    if(ccEmail && saved.ccEmail) ccEmail.value=saved.ccEmail;
+  }catch(e){}
+}
+
+['employee','empno','email','managerEmail','ccEmail'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el){
+    el.addEventListener('input',saveEmployeeProfile);
+    el.addEventListener('change',saveEmployeeProfile);
+  }
+});
+
+restoreEmployeeProfile();
+
+document.getElementById('inspectionId').textContent=makeInspectionId();
+const cb=document.getElementById('connectionBanner');
+if(cb) cb.textContent='CLOUD CONNECTION: READY — Supabase demo';
+
+update();
+const __submit=document.getElementById('submit'); if(__submit){__submit.disabled=false;__submit.removeAttribute('disabled');}
+</script></body></html>
