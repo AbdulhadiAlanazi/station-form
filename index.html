@@ -1982,20 +1982,22 @@ document.getElementById('submit').addEventListener('click',async function(e){
    let emailNote='';
    if(myEmail || coordinatorEmail || ccEmail){
      try{
-       const emailRes=await fetch('/.netlify/functions/send-email',{
-         method:'POST',
-         headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({
-           myEmail,
-           coordinatorEmail,
-           ccEmail,
-           station:payload.station,
-           employeeName:payload.employee_name,
-           empNo:payload.employee_no,
-           inspectionId:payload.inspection_id,
-           percentage:payload.percentage
-         })
-       });
+       const emailRes = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(myEmail)}`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  },
+  body: JSON.stringify({
+    _subject: `Station Cleaning Report - ${payload.station}`,
+ _cc: [coordinatorEmail, ccEmail].filter(Boolean).join(','),
+    Employee: payload.employee_name,
+    'EMP No': payload.employee_no,
+    Station: payload.station,
+    'Inspection ID': payload.inspection_id,
+    'Overall Score': payload.percentage + '%'
+  })
+});
        if(!emailRes.ok){
          const emailDetail=await emailRes.text();
          throw new Error('Email HTTP '+emailRes.status+' '+emailDetail);
